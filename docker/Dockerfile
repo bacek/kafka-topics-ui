@@ -20,6 +20,9 @@ RUN wget "https://github.com/Landoop/kafka-topics-ui/releases/download/v${KAFKA_
     && tar xzf /kafka-topics-ui.tar.gz -C /kafka-topics-ui \
     && rm -f /kafka-topics-ui.tar.gz
 
+# Patch UI to load env.js from different location
+RUN sed -i 's/env.js/config\/env.js' /kafka-topics-ui/index.html
+
 # Add configuration and runtime files
 ADD Caddyfile /caddy/Caddyfile.template
 ADD run.sh /
