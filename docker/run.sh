@@ -5,6 +5,7 @@ MAX_BYTES="${MAX_BYTES:-50000}"
 RECORD_POLL_TIMEOUT="${RECORD_POLL_TIMEOUT:-2000}"
 DEBUG_LOGS_ENABLED="${DEBUG_LOGS_ENABLED:-true}"
 INSECURE_PROXY=""
+CADDYFILE=${CADDYFILE:-/caddy/Caddyfile}
 CADDY_OPTIONS="${CADDY_OPTIONS:-}"
 EXPERIMENTAL_PROXY_URL="${EXPERIMENTAL_PROXY_URL:-false}"
 PORT="${PORT:-8000}"
@@ -15,6 +16,10 @@ PORT="${PORT:-8000}"
     echo "to find more about how you can configure this container."
     echo
 
+    cat /caddy/Caddyfile.template \
+        | sed -e "s/8000/$PORT/" > $CADDYFILE
+
+
     if echo "$PROXY_SKIP_VERIFY" | egrep -sq "true|TRUE|y|Y|yes|YES|1"; then
         INSECURE_PROXY=insecure_skip_verify
     fi
@@ -22,7 +27,7 @@ PORT="${PORT:-8000}"
     if echo $PROXY | egrep -sq "true|TRUE|y|Y|yes|YES|1" \
             && [[ ! -z "$KAFKA_REST_PROXY_URL" ]]; then
         echo "Enabling proxy."
-        cat <<EOF >>/caddy/Caddyfile
+        cat <<EOF >>$CADDYFILE
 proxy /api/kafka-rest-proxy $KAFKA_REST_PROXY_URL {
     without /api/kafka-rest-proxy
     $INSECURE_PROXY
@@ -54,7 +59,7 @@ EOF
 
     if [[ -n "${CADDY_OPTIONS}" ]]; then
         echo "Applying custom options to Caddyfile"
-        cat <<EOF >>/caddy/Caddyfile
+        cat <<EOF >>$CADDYFILE
 $CADDY_OPTIONS
 EOF
     fi
@@ -66,4 +71,4 @@ EOF
     echo "http://0.0.0.0:$PORT"
 } 1>&2
 
-exec /caddy/caddy -conf /caddy/Caddyfile -quiet
+exec /caddy/caddy -conf $CADDYFILE -quiet
